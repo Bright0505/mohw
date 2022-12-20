@@ -7,7 +7,7 @@
 衛服部醫事查詢系統爬蟲
 
 #### 使用方式
-''' docker build . '''
+<pre> docker build . </pre>
 該 images 資料庫，請於 env_config.py 內設定相關參數
 
 #### 注意事項
