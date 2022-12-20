@@ -1,13 +1,9 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
 from PIL import Image
 import pytesseract
 import time
-import env_config
-from multiprocessing import Process
-from concurrent.futures import ThreadPoolExecutor
 
 today=time.strftime('%Y-%m-%d', time.localtime())
 def maSearch(BAS_NAME,BAS_KIND):

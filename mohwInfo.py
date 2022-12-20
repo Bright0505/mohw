@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import env_config
 import pymysql
-from multiprocessing import Process
 from concurrent.futures import ThreadPoolExecutor
 
 today=time.strftime('%Y-%m-%d', time.localtime())

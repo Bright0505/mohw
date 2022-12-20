@@ -1,0 +1,7 @@
+db_host = "" #db host
+db_port = "" #db port
+db_user = "" #db user name
+db_pass = "" #db password
+db_base = "" #db
+db_infoTable = "" #db Table
+db_linkTable = "" #db Table
