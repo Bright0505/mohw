@@ -1,7 +1,7 @@
 # 衛服部醫事查詢系統爬蟲
-## python:3.10-slimAlpine
-## tesseract-ocr Version latest
-## google chromium Version latest
+* python:3.10-slimAlpine
+* tesseract-ocr Version latest
+* google chromium Version latest
 
 ### 簡介:
 衛服部醫事查詢系統爬蟲
