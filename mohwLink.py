@@ -3,9 +3,10 @@ from PIL import Image
 import pytesseract
 import time
 import re
+import csv
+from concurrent.futures import ThreadPoolExecutor
 
 today=time.strftime('%Y-%m-%d', time.localtime())
-
 baseUrl="https://ma.mohw.gov.tw/masearch/"
 headers = {
     'authority': 'ma.mohw.gov.tw',
@@ -29,11 +30,14 @@ session = requests.Session()
 basePage=session.get(baseUrl,headers=headers ,verify=False)
 getSessionId=basePage.cookies['ASP.NET_SessionId']
 
-getVIEWSTATE=re.search(r'__VIEWSTATE" value="([^"]+)"',basePage.text).group(1)
-getEVENTVALIDATION=re.search(r'__EVENTVALIDATION" value="([^"]+)"',basePage.text).group(1)
-getVIEWSTATEGENERATOR=re.search(r'__VIEWSTATEGENERATOR" value="([^"]+)"',basePage.text).group(1)
-cookie={'ASP.NET_SessionId': getSessionId}
+def getVIEWSTATE(html):
+    return re.search(r'__VIEWSTATE" value="([^"]+)"',html).group(1)
+def getEVENTVALIDATION(html):
+    return re.search(r'__EVENTVALIDATION" value="([^"]+)"',html).group(1)
+def getVIEWSTATEGENERATOR(html):
+    return re.search(r'__VIEWSTATEGENERATOR" value="([^"]+)"',html).group(1)
 
+cookie={'ASP.NET_SessionId': getSessionId}
 captuaUrl="https://ma.mohw.gov.tw/ValidateCode.aspx"
 getCaptuaImg=session.get(captuaUrl,headers=headers,cookies=cookie)
 with open('./tmp/captua.png', 'wb') as file:
@@ -45,10 +49,10 @@ payloadData = {
        '__EVENTTARGET': '',
        '__EVENTARGUMENT': '',
        '__LASTFOCUS': '',
-       '__VIEWSTATE': getVIEWSTATE,
-       '__VIEWSTATEGENERATOR': getVIEWSTATEGENERATOR,
+       '__VIEWSTATE': getVIEWSTATE(basePage.text),
+       '__VIEWSTATEGENERATOR': getVIEWSTATEGENERATOR(basePage.text),
        '__VIEWSTATEENCRYPTED': '',
-       '__EVENTVALIDATION': getEVENTVALIDATION,
+       '__EVENTVALIDATION': getEVENTVALIDATION(basePage.text),
        'eo_version': '12.0.10.2',
        'eo_style_keys': '/wFk',
        'ctl00$ContentPlaceHolder1$txtBAS_NAME': '',
@@ -58,21 +62,21 @@ payloadData = {
        'ctl00$ContentPlaceHolder1$ddlBasDep': '',
        'ctl00$ContentPlaceHolder1$TextBox1': captua,
        'ctl00$ContentPlaceHolder1$btnSearch': '查詢',
-   }
+    }
 loginPage=session.post(baseUrl,headers=headers,cookies=cookie,data=payloadData)
 getTotalPage=re.search(r'共 (\d+) 頁', loginPage.text).group(1)
 
-for pageNum in range(1,int(getTotalPage)+1):
+def getLink (PageNum):
     payloadDataPage = {
          '__eo_obj_states': '',
          '__eo_sc': '',
          '__EVENTTARGET': '',
          '__EVENTARGUMENT': '',
          '__LASTFOCUS': '',
-         '__VIEWSTATE': getVIEWSTATE,
-         '__VIEWSTATEGENERATOR': getVIEWSTATEGENERATOR,
+         '__VIEWSTATE': getVIEWSTATE(loginPage.text),
+         '__VIEWSTATEGENERATOR': getVIEWSTATEGENERATOR(loginPage.text),
          '__VIEWSTATEENCRYPTED': '',
-         '__EVENTVALIDATION': getEVENTVALIDATION,
+         '__EVENTVALIDATION': getEVENTVALIDATION(loginPage.text),
          'eo_version': '12.0.10.2',
          'eo_style_keys': '/wFk',
          'ctl00$ContentPlaceHolder1$txtBAS_NAME': '',
@@ -80,10 +84,17 @@ for pageNum in range(1,int(getTotalPage)+1):
          'ctl00$ContentPlaceHolder1$ddlAREA_CODE': '',
          'ctl00$ContentPlaceHolder1$ddlZIP_CODE': '',
          'ctl00$ContentPlaceHolder1$ddlBasDep': '',
-         'ctl00$ContentPlaceHolder1$TextBox1': captua,
-         'ctl00$ContentPlaceHolder1$NetPager1$txtPage': str(pageNum),
+         'ctl00$ContentPlaceHolder1$TextBox1': '',
+         'ctl00$ContentPlaceHolder1$NetPager1$txtPage': str(PageNum),
          'ctl00$ContentPlaceHolder1$NetPager1$btGo': 'Go',
-     }
+        }
     getLinkPage=session.post(baseUrl,headers=headers,cookies=cookie,data=payloadDataPage)
-    urls=re.findall(r'<a.*?href="(.*?)"[^>]*>詳細資料</a>', getLinkPage.text)
-    print (getLinkPage.text)
+    return re.findall(r'<a.*?href="(.*?)"[^>]*>詳細資料</a>', getLinkPage.text)
+
+with ThreadPoolExecutor(500) as executor:
+    links = executor.map(getLink, map(str, range(1, int(getTotalPage) + 1)))
+
+with open('./123.csv', "w", newline="", encoding="utf-8") as csv_file:
+    csv_writer = csv.writer(csv_file)
+    for link in links:
+        csv_writer.writerows(zip(link))
