@@ -91,10 +91,16 @@ def getLink (PageNum):
     getLinkPage=session.post(baseUrl,headers=headers,cookies=cookie,data=payloadDataPage)
     return re.findall(r'<a.*?href="(.*?)"[^>]*>詳細資料</a>', getLinkPage.text)
 
-with ThreadPoolExecutor(500) as executor:
-    links = executor.map(getLink, map(str, range(1, int(getTotalPage) + 1)))
+# with ThreadPoolExecutor(500) as executor:
+#     with open('./123.csv', "w", newline="", encoding="utf-8") as csv_file:
+#         csv_writer = csv.writer(csv_file)
+#         links = executor.map(getLink, map(str, range(1, int(getTotalPage) + 1)))
+#         csv_writer.writerows(zip(links))
 
-with open('./123.csv', "w", newline="", encoding="utf-8") as csv_file:
+with open('./123.csv', "a", newline="", encoding="utf-8") as csv_file:
     csv_writer = csv.writer(csv_file)
-    for link in links:
-        csv_writer.writerows(zip(link))
+    for row in range(1, int(getTotalPage)+1):
+            links = getLink(str(row))
+            for link in links:
+                csv_writer.writerow([baseUrl+link])
+        print(row)
