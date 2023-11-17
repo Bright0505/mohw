@@ -61,5 +61,29 @@ payloadData = {
    }
 loginPage=session.post(baseUrl,headers=headers,cookies=cookie,data=payloadData)
 getTotalPage=re.search(r'共 (\d+) 頁', loginPage.text).group(1)
-urls=re.findall(r'<a.*?href="(.*?)"[^>]*>詳細資料</a>', loginPage.text)
-print (urls)
+
+for pageNum in range(1,int(getTotalPage)+1):
+    payloadDataPage = {
+         '__eo_obj_states': '',
+         '__eo_sc': '',
+         '__EVENTTARGET': '',
+         '__EVENTARGUMENT': '',
+         '__LASTFOCUS': '',
+         '__VIEWSTATE': getVIEWSTATE,
+         '__VIEWSTATEGENERATOR': getVIEWSTATEGENERATOR,
+         '__VIEWSTATEENCRYPTED': '',
+         '__EVENTVALIDATION': getEVENTVALIDATION,
+         'eo_version': '12.0.10.2',
+         'eo_style_keys': '/wFk',
+         'ctl00$ContentPlaceHolder1$txtBAS_NAME': '',
+         'ctl00$ContentPlaceHolder1$ddlBAS_KIND': 'D',
+         'ctl00$ContentPlaceHolder1$ddlAREA_CODE': '',
+         'ctl00$ContentPlaceHolder1$ddlZIP_CODE': '',
+         'ctl00$ContentPlaceHolder1$ddlBasDep': '',
+         'ctl00$ContentPlaceHolder1$TextBox1': captua,
+         'ctl00$ContentPlaceHolder1$NetPager1$txtPage': str(pageNum),
+         'ctl00$ContentPlaceHolder1$NetPager1$btGo': 'Go',
+     }
+    getLinkPage=session.post(baseUrl,headers=headers,cookies=cookie,data=payloadDataPage)
+    urls=re.findall(r'<a.*?href="(.*?)"[^>]*>詳細資料</a>', getLinkPage.text)
+    print (getLinkPage.text)
