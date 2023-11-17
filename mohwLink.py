@@ -1,6 +1,3 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select
 import requests
 from PIL import Image
 import pytesseract
@@ -28,31 +25,36 @@ headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36',
 }
 requests.packages.urllib3.disable_warnings()
-baseSession=requests.request('GET',baseUrl,headers=headers ,verify=False)
-getSessionId=re.search(r'ASP.NET_SessionId=([a-zA-Z0-9]+);',baseSession.headers['Set-Cookie']).group(1)
-getVIEWSTATE=re.search(r'ASP.NET_SessionId=([a-zA-Z0-9]+);',baseSession.headers['Set-Cookie']).group(1)
-getEVENTVALIDATION=re.search(r'ASP.NET_SessionId=([a-zA-Z0-9]+);',baseSession.headers['Set-Cookie']).group(1)
-getVIEWSTATEGENERATOR=re.search(r'ASP.NET_SessionId=([a-zA-Z0-9]+);',baseSession.headers['Set-Cookie']).group(1)
-print (getSessionId)
-
-# data = {
-#        '__eo_obj_states': '',
-#        '__eo_sc': '',
-#        '__EVENTTARGET': '',
-#        '__EVENTARGUMENT': '',
-#        '__LASTFOCUS': '',
-#        '__VIEWSTATE': getVIEWSTATE,
-#        '__VIEWSTATEGENERATOR': getVIEWSTATEGENERATOR,
-#        '__VIEWSTATEENCRYPTED': '',
-#        '__EVENTVALIDATION': getEVENTVALIDATION,
-#        'eo_version': '12.0.10.2',
-#        'eo_style_keys': '/wFk',
-#        'ctl00$ContentPlaceHolder1$txtBAS_NAME': '',
-#        'ctl00$ContentPlaceHolder1$ddlBAS_KIND': 'D',
-#        'ctl00$ContentPlaceHolder1$ddlAREA_CODE': '',
-#        'ctl00$ContentPlaceHolder1$ddlZIP_CODE': '',
-#        'ctl00$ContentPlaceHolder1$ddlBasDep': '',
-#        'ctl00$ContentPlaceHolder1$TextBox1': captua,
-#        'ctl00$ContentPlaceHolder1$btnSearch': '查詢',
-#    }
-# 
+basePage=requests.request('GET',baseUrl,headers=headers ,verify=False)
+getSessionId=re.search(r'ASP.NET_SessionId=([a-zA-Z0-9]+);',basePage.headers['Set-Cookie']).group(1)
+getVIEWSTATE=re.search(r'__VIEWSTATE" value="([^"]+)"',basePage.text).group(1)
+getEVENTVALIDATION=re.search(r'__EVENTVALIDATION" value="([^"]+)"',basePage.text).group(1)
+getVIEWSTATEGENERATOR=re.search(r'__VIEWSTATEGENERATOR" value="([^"]+)"',basePage.text).group(1)
+captuaUrl="https://ma.mohw.gov.tw/ValidateCode.aspx"
+cookie={'ASP.NET_SessionId': getSessionId}
+getCaptuaImg=requests.get(captuaUrl,headers=headers,cookies=cookie)
+with open('./tmp/captua.png', 'wb') as file:
+        file.write(getCaptuaImg.content)
+captua=(pytesseract.image_to_string( Image.open('./tmp/captua.png'),lang='eng')).replace(" ","").replace("\n","")
+payloadData = {
+       '__eo_obj_states': '',
+       '__eo_sc': '',
+       '__EVENTTARGET': '',
+       '__EVENTARGUMENT': '',
+       '__LASTFOCUS': '',
+       '__VIEWSTATE': getVIEWSTATE,
+       '__VIEWSTATEGENERATOR': getVIEWSTATEGENERATOR,
+       '__VIEWSTATEENCRYPTED': '',
+       '__EVENTVALIDATION': getEVENTVALIDATION,
+       'eo_version': '12.0.10.2',
+       'eo_style_keys': '/wFk',
+       'ctl00$ContentPlaceHolder1$txtBAS_NAME': '',
+       'ctl00$ContentPlaceHolder1$ddlBAS_KIND': 'D',
+       'ctl00$ContentPlaceHolder1$ddlAREA_CODE': '',
+       'ctl00$ContentPlaceHolder1$ddlZIP_CODE': '',
+       'ctl00$ContentPlaceHolder1$ddlBasDep': '',
+       'ctl00$ContentPlaceHolder1$TextBox1': captua,
+       'ctl00$ContentPlaceHolder1$btnSearch': '查詢',
+   }
+linkPage=requests.get(baseUrl,headers=headers,cookies=cookie,data=payloadData)
+print(linkPage.headers)
