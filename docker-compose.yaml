@@ -1,0 +1,40 @@
+version: '3.1'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./:/app:rw
+    links:
+      - mysql
+    networks:
+      - vpcbrs
+
+  mysql:
+    image: mysql:8.0.30
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: test
+      MYSQL_ROOT_PASSWORD: test
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+    # ports:
+    #   - 3306:3306
+    volumes:
+      - mysqldata:/var/lib/mysql
+      - ./lnmp/mysql-dump:/docker-entrypoint-initdb.d
+    networks:
+      - vpcbrs
+volumes:
+  mysqldata:
+
+networks:
+  vpcbrs:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.10.0/24

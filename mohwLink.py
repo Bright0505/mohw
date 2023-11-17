@@ -25,14 +25,17 @@ headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36',
 }
 requests.packages.urllib3.disable_warnings()
-basePage=requests.request('GET',baseUrl,headers=headers ,verify=False)
-getSessionId=re.search(r'ASP.NET_SessionId=([a-zA-Z0-9]+);',basePage.headers['Set-Cookie']).group(1)
+session = requests.Session()
+basePage=session.get(baseUrl,headers=headers ,verify=False)
+getSessionId=basePage.cookies['ASP.NET_SessionId']
+
 getVIEWSTATE=re.search(r'__VIEWSTATE" value="([^"]+)"',basePage.text).group(1)
 getEVENTVALIDATION=re.search(r'__EVENTVALIDATION" value="([^"]+)"',basePage.text).group(1)
 getVIEWSTATEGENERATOR=re.search(r'__VIEWSTATEGENERATOR" value="([^"]+)"',basePage.text).group(1)
-captuaUrl="https://ma.mohw.gov.tw/ValidateCode.aspx"
 cookie={'ASP.NET_SessionId': getSessionId}
-getCaptuaImg=requests.get(captuaUrl,headers=headers,cookies=cookie)
+
+captuaUrl="https://ma.mohw.gov.tw/ValidateCode.aspx"
+getCaptuaImg=session.get(captuaUrl,headers=headers,cookies=cookie)
 with open('./tmp/captua.png', 'wb') as file:
         file.write(getCaptuaImg.content)
 captua=(pytesseract.image_to_string( Image.open('./tmp/captua.png'),lang='eng')).replace(" ","").replace("\n","")
@@ -56,5 +59,7 @@ payloadData = {
        'ctl00$ContentPlaceHolder1$TextBox1': captua,
        'ctl00$ContentPlaceHolder1$btnSearch': '查詢',
    }
-linkPage=requests.get(baseUrl,headers=headers,cookies=cookie,data=payloadData)
-print(linkPage.headers)
+loginPage=session.post(baseUrl,headers=headers,cookies=cookie,data=payloadData)
+getTotalPage=re.search(r'共 (\d+) 頁', loginPage.text).group(1)
+urls=re.findall(r'<a.*?href="(.*?)"[^>]*>詳細資料</a>', loginPage.text)
+print (urls)
